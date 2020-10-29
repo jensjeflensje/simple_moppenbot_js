@@ -1,7 +1,8 @@
-const { Client, RichEmbed } = require("discord.js");
+const { Client, MessageEmbed } = require("discord.js");
 const { get } = require("superagent");
 const { prefix, token } = require("./config.json");
 const bot = new Client();
+bot.login(token);
 
 bot.on('ready', () => {
     console.log(`${bot.user.tag} werkt nu als simple_moppenbot`);
@@ -16,7 +17,7 @@ bot.on('message', message => {
                     return;
                 }
                 let jokeObj = res.body.joke;
-                let embed = new RichEmbed()
+                let embed = new MessageEmbed()
                     .setTitle(`Mop van ${jokeObj.author}`)
                     .setDescription(jokeObj.joke)
                     .setFooter(`${jokeObj.likes} likes`);
@@ -28,4 +29,3 @@ bot.on('message', message => {
     }
 });
 
-bot.login(token);
