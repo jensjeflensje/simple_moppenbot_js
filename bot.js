@@ -1,31 +1,38 @@
-const { Client, MessageEmbed } = require("discord.js");
-const { get } = require("superagent");
-const { prefix, token } = require("./config.json");
-const bot = new Client();
-bot.login(token);
+const fs = require('node:fs');
+const path = require('node:path');
+const { Client, Events, GatewayIntentBits, Collection } = require('discord.js');
+const { token } = require('./config.json');
 
-bot.on('ready', () => {
-    console.log(`${bot.user.tag} werkt nu als simple_moppenbot`);
+const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+
+client.commands = new Collection();
+const commandsPath = path.join(__dirname, 'commands');
+const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+
+for (const file of commandFiles) {
+	const filePath = path.join(commandsPath, file);
+	const command = require(filePath);
+	client.commands.set(command.data.name, command);
+}
+
+client.once(Events.ClientReady, c => {
+	console.log(`${c.user.tag} werkt nu als simple_moppenbot`);
 });
 
-bot.on('message', message => {
-    if (message.content === `${prefix}mop`) {
-        get("https://moppenbot.nl/api/random")
-            .then(res => {
-                if (!res.body.success) {
-                    message.channel.send("MoppenBot API gaf een error aan.");
-                    return;
-                }
-                let jokeObj = res.body.joke;
-                let embed = new MessageEmbed()
-                    .setTitle(`Mop van ${jokeObj.author}`)
-                    .setDescription(jokeObj.joke)
-                    .setFooter(`${jokeObj.likes} likes`);
-                message.channel.send(embed);
-            })
-            .catch(err => {
-                message.channel.send("HTTP request gaf een error aan.")
-            });
-    }
+client.on(Events.InteractionCreate, async interaction => {
+	if (!interaction.isChatInputCommand()) return;
+
+	const command = client.commands.get(interaction.commandName);
+
+	if (!command) return;
+
+	try {
+		await command.execute(interaction);
+	} catch (error) {
+		console.error(error);
+		await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+	}
 });
 
+require('./deploy-commands.js');
+client.login(token);
