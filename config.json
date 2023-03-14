@@ -1,4 +1,5 @@
 {
-  "token": "token",
-  "prefix": "!"
+  	"token": "voer-je-token-hier-in",
+	"clientId": "voer-je-bot-client-id-hier-in",
+	"guildId": "voer-je-guild-id-hier-in"
 }
